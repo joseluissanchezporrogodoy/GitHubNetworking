@@ -56,23 +56,27 @@ do {
 
 ### Unit Tests
 
-The package includes unit tests for all major functionalities. Mocks are used for testing network requests without making actual API calls.
+The package includes unit tests (written in swift testing) for all major functionalities. Mocks are used for testing network requests without making actual API calls. 
 
 ### Example Test
 
 ```swift
-import XCTest
+import Testing
 @testable import GitHubNetworking
 
-final class GitHubAPIClientTests: XCTestCase {
-    func testFetchUserSuccess() async throws {
-        // Mock data setup
-        let mockClient = MockGitHubAPIClient()
-        mockClient.mockUser = User(login: "octocat", name: "The Octocat", avatarUrl: nil)
+@Test
+    func testFetchNonExistentUser() async throws {
+       
+        let username = "this_user_should_not_exist_12345"
         
-        // Fetch user
-        let user = try await mockClient.fetchUser(username: "octocat")
-        XCTAssertEqual(user.login, "octocat")
+        do {
+            _ = try await apiClient.fetchUser(username: username)
+            Issue.record("La solicitud debería fallar para un usuario inexistente.")
+        } catch GitHubAPIError.userNotFound {
+            assert(true, GitHubAPIError.userNotFound.errorDescription)
+        } catch {
+            Issue.record("Se recibió un error inesperado: \(error)")
+        }
     }
 }
 ```
